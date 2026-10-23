@@ -50,6 +50,18 @@ public class MainActivity extends Activity {
       } catch (Exception e) { return false; }
     }
 
+    @JavascriptInterface public boolean launchActivity(String pkg, String cls) {
+      try {
+        Intent i = new Intent(Intent.ACTION_MAIN);
+        i.addCategory(Intent.CATEGORY_LAUNCHER);
+        i.setClassName(pkg, cls);
+        i.setComponent(new android.content.ComponentName(pkg, cls));
+        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(i);
+        return true;
+      } catch (Exception e) { return false; }
+    }
+
     @JavascriptInterface public String apps() {
       PackageManager pm = getPackageManager();
       Intent q = new Intent(Intent.ACTION_MAIN);
@@ -62,6 +74,7 @@ public class MainActivity extends Activity {
           JSONObject o = new JSONObject();
           o.put("n", String.valueOf(r.loadLabel(pm)));
           o.put("p", p);
+          o.put("a", r.activityInfo.name);
           out.put(o);
         } catch (Exception e) {}
       }
