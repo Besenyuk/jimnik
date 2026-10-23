@@ -2,6 +2,10 @@ package ua.jimny.launcher;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import android.os.Bundle;
 import android.view.View;
 import android.webkit.JavascriptInterface;
@@ -36,9 +40,32 @@ public class MainActivity extends Activity {
   @Override public void onBackPressed() { web.evaluateJavascript("history.back()", null); }
 
   class Bridge {
-    @JavascriptInterface public void launch(String pkg) {
-      Intent i = getPackageManager().getLaunchIntentForPackage(pkg);
-      if (i != null) startActivity(i);
+    @JavascriptInterface public boolean launch(String pkg) {
+      try {
+        Intent i = getPackageManager().getLaunchIntentForPackage(pkg);
+        if (i == null) return false;
+        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(i);
+        return true;
+      } catch (Exception e) { return false; }
+    }
+
+    @JavascriptInterface public String apps() {
+      PackageManager pm = getPackageManager();
+      Intent q = new Intent(Intent.ACTION_MAIN);
+      q.addCategory(Intent.CATEGORY_LAUNCHER);
+      JSONArray out = new JSONArray();
+      for (ResolveInfo r : pm.queryIntentActivities(q, 0)) {
+        String p = r.activityInfo.packageName;
+        if (p.equals(getPackageName())) continue;
+        try {
+          JSONObject o = new JSONObject();
+          o.put("n", String.valueOf(r.loadLabel(pm)));
+          o.put("p", p);
+          out.put(o);
+        } catch (Exception e) {}
+      }
+      return out.toString();
     }
   }
 }
